@@ -2,6 +2,7 @@
 simple read list in loop, interval = 0.5 seconds (default)
 Read a list of tags, log value changes
 """
+import re
 import os
 import sys
 import time
@@ -11,7 +12,9 @@ import datetime
 from credentials_plclogpoc import get_creds
 from googleapiclient.discovery import build
 
-do_plclogpoc_debug = 'PLCLOGPOC_DEBUG' in os.environ
+do_plclogpoc_debug = 'PLCLOGPOC_DEBUG' in os.environ or '--debug' in sys.argv
+
+rgx_ur = re.compile(':C(\d+)$')
 
 ########################################################################
 ########################################################################
@@ -69,6 +72,7 @@ class PYLOGIX_LOGGER_GOOGLE_SHEET(PYLOGIX_LOGGER):
                 ,SHEET_NAME='PLCLOGPOC'
                 ,TOKEN_FILE='token.pickle'
                 ,CREDENTIAL_FILE='credentials.json'
+                ,max_rows=200
                 ,**kwargs
                 ):
 
@@ -78,6 +82,11 @@ class PYLOGIX_LOGGER_GOOGLE_SHEET(PYLOGIX_LOGGER):
         self.name = SHEET_NAME
         self.token_file = TOKEN_FILE
         self.creds_file = CREDENTIAL_FILE
+        self.max_rows = max([20,int(max_rows)])
+        if self.max_rows > int(max_rows):
+            print('Limiting Google sheet to minimum of {0} rows instead of requested {1} rows'
+                 .format(self.max_rows,max_rows)
+                 )
 
         ### Credential => Spreadsheet
         self.creds = get_creds(TOKEN_FILE=self.token_file
@@ -90,14 +99,45 @@ class PYLOGIX_LOGGER_GOOGLE_SHEET(PYLOGIX_LOGGER):
         if not self.changeds: return       ### Do nothing for no changes
 
         ### Append changed rows to spreadsheet
-        result = self.ssheets.values().append(spreadsheetId=self.ss_id
-                                   ,range=f"'{self.name}'!A3"
-                                   ,body=dict(values=self.changeds)
-                                   ,valueInputOption="RAW"
-                                   ,insertDataOption="INSERT_ROWS"
-                                   ).execute()
+        append = self.ssheets.values().append
+        result = append(spreadsheetId=self.ss_id
+                       ,range=f"'{self.name}'!A3"
+                       ,body=dict(values=self.changeds)
+                       ,valueInputOption="RAW"
+                       ,insertDataOption="INSERT_ROWS"
+                       ).execute()
+
 
         if do_plclogpoc_debug: print(dict(append_result=result))
+
+        ### Limit number of rows by deleting five at a time
+        updatedRange = result.get('updates',dict()).get('updatedRange','')
+        match = rgx_ur.search(updatedRange)
+        if not (None is match):
+            try:
+                last_row_appended = int(match.groups()[-1])
+                assert self.max_rows < last_row_appended   ### cheap exceptions
+                batchUpdate = self.ssheets.batchUpdate
+                r = batchUpdate(spreadsheetId=self.ss_id
+                               ,body={'requests':
+                                       [
+                                         {'deleteDimension':
+                                             {'range':
+                                                 {'sheetId':0
+                                                 ,'dimension':'ROWS'
+                                                 ,'startIndex':2
+                                                 ,'endIndex':7
+                                                 }
+                                             }
+                                         }
+                                       ]
+                                     }
+                               ).execute()
+
+            except AssertionError as e: pass
+            except:
+                import traceback
+                traceback.print_exc()
 
         ### Update Last-update timestamps on row 2
         update_time = dict(values=[[self.now,self.now]])
@@ -170,6 +210,10 @@ if "__main__" == __name__:
                  +[a[13:] for a in av1 if a[:13]=='--gapi-creds=']
                  )[-1]
 
+    max_rows = ([200]
+               +[a[16:] for a in av1 if a[:16]=='--gapi-max-rows=']
+               )[-1]
+
     ### Ensure at least one tag is present
     assert tags,"""
 Usage:
@@ -193,7 +237,8 @@ python pylogix_logger_drbitboy              \\
           [--gapi-ssheet-id=...]            \\
           [--gapi-sheet-name=...]           \\
           [--gapi-creds=credentials.json]   \\
-          [--gapi-pickle=token.pickle]
+          [--gapi-pickle=token.pickle]      \\
+          [--gapi-max-rows=20]
 """
 
     with pylogix.PLC(ipaddr) as comm:
@@ -217,6 +262,7 @@ python pylogix_logger_drbitboy              \\
                                                         ,SHEET_NAME=sheet_name
                                                         ,TOKEN_FILE=pickle_file
                                                         ,CREDENTIAL_FILE=creds_file
+                                                        ,max_rows=max_rows
                                                         )
                             )
 
