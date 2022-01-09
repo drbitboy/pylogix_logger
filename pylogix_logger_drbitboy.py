@@ -121,14 +121,41 @@ class PYLOGIX_LOGGER_GOOGLE_SHEET(PYLOGIX_LOGGER):
                 r = batchUpdate(spreadsheetId=self.ss_id
                                ,body={'requests':
                                        [
-                                         {'deleteDimension':
-                                             {'range':
-                                                 {'sheetId':0
-                                                 ,'dimension':'ROWS'
-                                                 ,'startIndex':2
-                                                 ,'endIndex':7
-                                                 }
+                                         {'repeatCell':
+                                           {'range':
+                                             {'sheetId':0
+                                             ,'startRowIndex':2
+                                             ,'endRowIndex':last_row_appended
+                                             ,'startColumnIndex':3
+                                             ,'endColumnIndex':4
                                              }
+                                           ,'cell':
+                                             {'userEnteredValue':
+                                               {'formulaValue':
+                                                     '=if(C3=""'
+                                                        ',""'
+                                                        ',date(left(C3,4)'
+                                                             ',right(left(C3,7),2)'
+                                                             ',right(left(C3,10),2)'
+                                                             ')'
+                                                        '+time(left(right(C3,8),2)'
+                                                             ',left(right(C3,5),2)'
+                                                             ',right(C3,2)'
+                                                             ')'
+                                                        ')'
+                                               }
+                                             }
+                                           ,'fields': 'userEnteredValue'
+                                           }
+                                         }
+                                       , {'deleteDimension':
+                                           {'range':
+                                             {'sheetId':0
+                                             ,'dimension':'ROWS'
+                                             ,'startIndex':2
+                                             ,'endIndex':7
+                                             }
+                                           }
                                          }
                                        ]
                                      }
