@@ -8,6 +8,7 @@ import sys
 import time
 import pylogix
 import datetime
+import pandas as pd
 #from pycomm3 import SLCDriver
 from credentials_plclogpoc import get_creds
 from googleapiclient.discovery import build
@@ -30,7 +31,7 @@ class PYLOGIX_LOGGER:
     def log_news(self,news,*args,**kwargs):
         """
 Initialize timestamp and empty list of changed values
-Append [Name,Value,Timestamp] triplets for changed values
+Append [Item,Value,Timestamp] triplets for changed values
 Log changed values
 
 """
@@ -49,7 +50,7 @@ Log changed values
 ########################################################################
 
 class PYLOGIX_LOGGER_FLAT_ASCII(PYLOGIX_LOGGER):
-    """Log "Name - Value - Timestamp" to flat ASCII file"""
+    """Log "Item - Value - Timestamp" to flat ASCII file"""
 
     def __init__(self,log_name,*args
                      ,fmtstr="{0} - {1} - {2}\n"
@@ -70,12 +71,43 @@ class PYLOGIX_LOGGER_FLAT_ASCII(PYLOGIX_LOGGER):
 ########################################################################
 
 class PYLOGIX_LOGGER_CSV(PYLOGIX_LOGGER_FLAT_ASCII):
-    """Log "Name,Value,Timestamp" to CSV flat ASCII file"""
+    """Log "Item,Value,Timestamp" to CSV flat ASCII file"""
 
     def __init__(self,csv_name,*args,**kwargs):
         super().__init__(csv_name,*args,fmtstr="{0},{1},{2}\n",**kwargs)
 
     ### Let PYLOGIX_LOGGER_FLAT_ASCII.__call__ do the work
+
+########################################################################
+########################################################################
+
+class PYLOGIX_LOGGER_EXCEL(PYLOGIX_LOGGER):
+    """Log "Item,Value,Timestamp" to eXcel workbook"""
+    def __init__(self,xl_name,*args,max_rows=0,**kwargs):
+
+        super().__init__(*args,**kwargs)
+
+        self.xl_name = xl_name
+        self.max_rows = (max_rows and int(max_rows) > 0
+                        ) and int(max_rows) or 0
+
+    def __call__(self,*args,**kwargs):
+        """Append changes to flat ASCII file"""
+        if self.changeds:                  ### Do nothing for no changes
+            dfnew = pd.DataFrame(self.changeds
+                                ,columns='Item Value Timestamp'.split()
+                                )
+            try:
+                dfold = pd.read_excel(self.xl_name)
+                dfnew.columns = dfold.columns
+            except:
+                dfold = pd.DataFrame([],columns=dfnew.columns)
+
+            with pd.ExcelWriter(self.xl_name, mode="w") as writer:
+                leftidx = (self.max_rows>0) and (-self.max_rows) or 0
+                dfold.append(dfnew).iloc[leftidx:].to_excel(writer
+                                                           ,index=False
+                                                           )
 
 ########################################################################
 ########################################################################
@@ -229,12 +261,21 @@ if "__main__" == __name__:
              +[a[13:] for a in av1 if a[:13]=='--flat-ascii=']
              )[-1]
 
-
     ### Filename for CSV log:  --flat-csv=csv_log.csv
 
     csv = ([False]
           +[a[11:] for a in av1 if a[:11]=='--flat-csv=']
           )[-1]
+
+    ### Filename for eXcel log:  --excel=xl_log.xlsx --excel-max-rows=0
+
+    xl = ([False]
+          +[a[8:] for a in av1 if a[:8]=='--excel=']
+          )[-1]
+
+    xl_max_rows = ([False]
+                  +[a[17:] for a in av1 if a[:17]=='--excel-max-rows=']
+                  )[-1]
 
     ### Google sheet API - only used if spreadsheet ID is not False
     ###
@@ -259,9 +300,9 @@ if "__main__" == __name__:
                  +[a[13:] for a in av1 if a[:13]=='--gapi-creds=']
                  )[-1]
 
-    max_rows = ([200]
-               +[a[16:] for a in av1 if a[:16]=='--gapi-max-rows=']
-               )[-1]
+    gapi_max_rows = ([200]
+                    +[a[16:] for a in av1 if a[:16]=='--gapi-max-rows=']
+                    )[-1]
 
     ### Ensure at least one tag is present
     assert tags,"""
@@ -284,6 +325,12 @@ python pylogix_logger_drbitboy              \\
         ### CSV Flat ASCII log filename:    \\
                                             \\
           [--flat-csv=...]                  \\
+                                            \\
+        ### eXcel log filename:             \\
+                                            \\
+          [--excel=...]                     \\
+          [--excel-max-rows=0]              \\
+          N.B. 0 => no limit on rows        \\
                                             \\
         ### Google Sheets:                  \\
                                             \\
@@ -312,14 +359,22 @@ python pylogix_logger_drbitboy              \\
         if csv:
             pyloggers.append(PYLOGIX_LOGGER_CSV(csv,R()))
 
+        if xl:
+            pyloggers.append(PYLOGIX_LOGGER_EXCEL(xl
+                                                 ,R()
+                                                 ,max_rows=xl_max_rows
+                                                 )
+                            )
+
         if ssheet_id:
-            pyloggers.append(PYLOGIX_LOGGER_GOOGLE_SHEET(R()
-                                                        ,SS_ID=ssheet_id
-                                                        ,SHEET_NAME=sheet_name
-                                                        ,TOKEN_FILE=pickle_file
-                                                        ,CREDENTIAL_FILE=creds_file
-                                                        ,max_rows=max_rows
-                                                        )
+            pyloggers.append(
+                PYLOGIX_LOGGER_GOOGLE_SHEET(R()
+                                           ,SS_ID=ssheet_id
+                                           ,SHEET_NAME=sheet_name
+                                           ,TOKEN_FILE=pickle_file
+                                           ,CREDENTIAL_FILE=creds_file
+                                           ,max_rows=gapi_max_rows
+                                           )
                             )
 
         while True:
