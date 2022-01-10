@@ -75,7 +75,7 @@ class PYLOGIX_LOGGER_CSV(PYLOGIX_LOGGER_FLAT_ASCII):
     def __init__(self,csv_name,*args,**kwargs):
         super().__init__(csv_name,*args,fmtstr="{0},{1},{2}\n",**kwargs)
 
-    ### Let PYLOGIX_LOGGER_CSV .__call__ to the job
+    ### Let PYLOGIX_LOGGER_FLAT_ASCII.__call__ do the work
 
 ########################################################################
 ########################################################################
@@ -280,6 +280,10 @@ python pylogix_logger_drbitboy              \\
         ### Flat ASCII log filename:        \\
                                             \\
           [--flat-ascii=...]                \\
+                                            \\
+        ### CSV Flat ASCII log filename:    \\
+                                            \\
+          [--flat-csv=...]                  \\
                                             \\
         ### Google Sheets:                  \\
                                             \\
