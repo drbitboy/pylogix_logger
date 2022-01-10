@@ -387,4 +387,5 @@ python pylogix_logger_drbitboy              \\
                 time.sleep(intrvl)
 
             except KeyboardInterrupt:
+                print('\n\n\n')
                 break                            # stop looping on CTRL+C
