@@ -51,8 +51,12 @@ Log changed values
 class PYLOGIX_LOGGER_FLAT_ASCII(PYLOGIX_LOGGER):
     """Log "Name - Value - Timestamp" to flat ASCII file"""
 
-    def __init__(self,log_name,*args,**kwargs):
+    def __init__(self,log_name,*args
+                     ,fmtstr="{0} - {1} - {2}\n"
+                     ,**kwargs
+                     ):
         self.log_name = log_name
+        self.format = fmtstr.format
         super().__init__(*args,**kwargs)
 
     def __call__(self,*args,**kwargs):
@@ -60,7 +64,18 @@ class PYLOGIX_LOGGER_FLAT_ASCII(PYLOGIX_LOGGER):
         if self.changeds:                  ### Do nothing for no changes
             with open(self.log_name, "a") as fOut:
                 for changed in self.changeds:
-                    fOut.write("{0} - {1} - {2}\n".format(*changed))
+                    fOut.write(self.format(*changed))
+
+########################################################################
+########################################################################
+
+class PYLOGIX_LOGGER_CSV(PYLOGIX_LOGGER_FLAT_ASCII):
+    """Log "Name,Value,Timestamp" to CSV flat ASCII file"""
+
+    def __init__(self,csv_name,*args,**kwargs):
+        super().__init__(csv_name,*args,fmtstr="{0},{1},{2}\n",**kwargs)
+
+    ### Let PYLOGIX_LOGGER_CSV .__call__ to the job
 
 ########################################################################
 ########################################################################
@@ -214,6 +229,13 @@ if "__main__" == __name__:
              +[a[13:] for a in av1 if a[:13]=='--flat-ascii=']
              )[-1]
 
+
+    ### Filename for CSV log:  --flat-csv=csv_log.csv
+
+    csv = ([False]
+          +[a[11:] for a in av1 if a[:11]=='--flat-csv=']
+          )[-1]
+
     ### Google sheet API - only used if spreadsheet ID is not False
     ###
     ###   --gapi-ssheet-id=...              ### Spreadsheet identifier
@@ -282,6 +304,9 @@ python pylogix_logger_drbitboy              \\
 
         if flatxt:
             pyloggers.append(PYLOGIX_LOGGER_FLAT_ASCII(flatxt,R()))
+
+        if csv:
+            pyloggers.append(PYLOGIX_LOGGER_CSV(csv,R()))
 
         if ssheet_id:
             pyloggers.append(PYLOGIX_LOGGER_GOOGLE_SHEET(R()
