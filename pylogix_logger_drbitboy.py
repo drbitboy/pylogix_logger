@@ -37,6 +37,10 @@ python pylogix_logger_drbitboy             \\
          [--ip=192.168.1.10]               \\
          [--micro8xx]                      \\
                                            \\
+       Logging inter-sample interval, s:   \\
+                                           \\
+         [--interval=0.5]                  \\
+                                           \\
        Flat ASCII log:                     \\
                                            \\
          [--flat-ascii=path.txt]           \\

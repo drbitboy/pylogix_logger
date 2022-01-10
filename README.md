@@ -7,6 +7,8 @@
          [--ip=192.168.1.10]                   \  PLC connection information
          [--micro8xx]                          \
                                                \
+         [--interval=0.5]                      \  Logging inter-sample interval, s
+                                               \
          [--flat-ascii=path.txt]               \  Flat ASCII log
                                                \
          [--flat-csv=path.csv]                 \  CSV Flat ASCII log
