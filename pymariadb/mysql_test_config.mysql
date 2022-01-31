@@ -1,0 +1,51 @@
+-- #####################################################################
+-- ### N.B. these queries must be executed as MariaDB/MySQL user 'root'
+-- #####################################################################
+-- ### Purpose: One-time script to create and configure MariaDB/MySQL
+-- ###          user 'test' to have all privileges (CREATE, INSERT,
+-- ###          DELETE, DROP, etc.) on any databases (DBs) with a name
+-- ###          that starts with 'test' e.g. on a DB named 'test_drbit'
+-- #####################################################################
+-- ### Usage:
+-- ###
+-- ###   bash%    mysql -uroot -p < mysql_test_config.mysql
+-- ###
+-- ###   - N.B. [mysql] client will prompt for root password
+-- ###   - BASH command-line shown
+-- ###     - 'bash%' is the BASH command-line prompt
+-- #####################################################################
+
+CREATE user test@localhost;
+GRANT ALL PRIVILEGES ON test.* TO test@localhost ;
+UPDATE mysql.db SET db='test%' WHERE user='test' and host='localhost';
+FLUSH PRIVILEGES;
+
+-- #####################################################################
+-- ### Create user "test@localhost" with empty (blank) password
+--
+-- CREATE user test@localhost identified by '';
+--
+-- #####################################################################
+-- ### Grant full privileges on database test, and on any of its tables
+-- ### (test.*), to user test@localhost, then change that database name
+-- ### to any database that starts with "test" N.B. % is a wildcard
+--
+-- GRANT ALL PRIVILEGES ON test.* TO test@localhost ;
+-- UPDATE db SET db='test%' WHERE user='test';
+--
+-- #####################################################################
+-- ### Flush privilege changes above to running MySQL server
+--
+-- FLUSH PRIVILEGES;
+--
+-- #####################################################################
+-- ### To show results
+--
+-- SELECT * FROM user;
+-- SELECT * FROM db;
+--
+-- #####################################################################
+-- ### To feverse these changes (execute with care):
+--
+-- delete from mysql.db where user='test' and host='localhost' and db='test%';
+-- delete from mysql.user where user='test' and host='localhost' and password='';

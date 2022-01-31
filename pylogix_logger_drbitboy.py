@@ -2,6 +2,7 @@
 simple read list in loop, interval = 0.5 seconds (default)
 Read a list of tags, log value changes
 """
+import re
 import sys
 import time
 import pylogix
@@ -63,6 +64,17 @@ python pylogix_logger_drbitboy             \\
          [--gapi-creds=credentials.json]   \\
          [--gapi-pickle=token.pickle]      \\
          [--gapi-max-rows=20]              \\
+                                           \\
+       MariaDB/MySQL log:                  \\
+                                           \\
+         [--mysql-db=test_...]             \\
+                                           \\
+       -> MySQLdb.connect() keyword args:  \\
+                                           \\
+          [--mysql-host=...]               \\
+          [--mysql-user=...]               \\
+          [--mysql-password='']            \\
+          [--mysql-read_default_group='']  \\
                                            \\
        Debugging:                          \\
                                            \\
@@ -137,7 +149,30 @@ python pylogix_logger_drbitboy             \\
                     +[a[16:] for a in av1 if a[:16]=='--gapi-max-rows=']
                     )[-1]
 
-    ### 1.7) PYLOGIX_LOGGER debugging
+    ### 1.8) MariaDB/MySQL database log:
+    ###   --mysql-db=...     ### MariaDB/MySQL server database name
+    ###   --mysql-KEY=VALUE  ### MySQLdb.connect keyword arg KEY=VAL
+    ###   E.g. 
+    ###     --mysql-host=localhost          ### Host running DB server
+    ###     --mysql-user=test               ### DB server username
+    ###     --mysql-passwd=''               ### DB server user password
+    ###     --mysql-read_default_group=''   ### ~/.my.cnf dflt group ID
+
+    mysql_db = ([False]
+               +[a[11:] for a in av1 if a[:11]=='--mysql-db=']
+               )[-1]
+
+    rgx_mysql = re.compile('^--mysql-([A-Za-z0-9_]+)=(.*)$')
+
+    mysql_kwargs = dict()
+
+    for arg in av1:
+      match = rgx_mysql.match(arg)
+      if None is match: continue
+      key,val = match.groups()
+      mysql_kwargs[key] = val
+
+    ### 1.9) PYLOGIX_LOGGER debugging
 
     debug = '--debug' in av1
 
@@ -183,6 +218,14 @@ python pylogix_logger_drbitboy             \\
                                               ,max_rows=gapi_max_rows
                                               ,debug=debug
                                               )
+               )
+
+        ### 2.2.5) MariaDB/MySQL log
+        if mysql_db:
+            app(LC.PYLOGIX_LOGGER_MYSQL(R()
+                                       ,debug=debug
+                                       ,**mysql_kwargs
+                                       )
                )
         ### End prologue
         ################################################################

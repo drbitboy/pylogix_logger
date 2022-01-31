@@ -18,11 +18,26 @@
                                                \
          [--gapi-ssheet-id=...]                \  Google Sheets API (gapi) log
          [--gapi-sheet-name=PLCLOGPOC]         \
-         [--gapi-creds=credentials.json]       \
-         [--gapi-pickle=token.pickle]          \
+         [--gapi-creds=credentials.json]       \  - Cf. [Google API] below
+         [--gapi-pickle=token.pickle]          \  - Cf. [Google API] below
          [--gapi-max-rows=20]                  \
                                                \
+         [--mysql-db=test_drbitboy]            \  MariaDB/MySQL log; DB name
+                                               \
+           [--mysql-host=...]                  \ - MySQLdb.connect() keyword args
+           [--mysql-user=...]                  \
+           [--mysql-password='']               \
+           [--mysql-read_default_group='']     \
+                                               \
+       Debugging:                              \
+                                               \
          [--debug]                             \  Turn on debugging to STDOUT
+
+       PLC configuration:
+
+         --ip=192.168.1.10                     \ IP address
+         --micro8...                           \ If PLC is Micro8xx
+                                               \
 
 
 e.g. to log data from the CCW/Micro820 program in the image below,
@@ -35,6 +50,12 @@ e.g. to log data from the CCW/Micro820 program in the image below,
     > --flat-ascii=/dev/stdout \
 
 ![](https://github.com/drbitboy/pylogix_logger/raw/master/images/pylogix_logger_ccw.png)
+
+### MariaDB/MySQL API
+
+See files under sub-directory pymariadb/.
+
+### Google API
 
 ### See also
 
