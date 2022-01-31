@@ -155,6 +155,55 @@ max_rows:  approximate limit for number of rows in worksheet
 ########################################################################
 ########################################################################
 
+class PYLOGIX_LOGGER_MYSQL(PYLOGIX_LOGGER):
+    """Log 'TagName,Value,Timestamp' to MariaDB/MySQL database table"""
+
+    ################################
+    def __init__(self
+                ,*args
+                ,debug=False
+                ,**mysql_kwargs
+                ):
+        """
+Keys in mysql_kwargs:
+      db:  DATABASE name on MariaDB/MySQL database (DB) server; required
+    host:  Hostname or IP address where DB server is running
+    user:  DB username
+password:  Password for user on DB server
+read_default_group:  group to use from e.g. ~/.my.cnf
+
+"""
+        super().__init__(*args,debug=debug,**mysql_kwargs)
+
+        self.db = mysql_kwargs['db']
+
+        ### Use MySQLdb module to open connection with autocommit:
+        import MySQLdb
+        self.cursor = MySQLdb.connect(autocommit=True
+                                     ,**mysql_kwargs
+                                     ).cursor()
+        if debug:
+          cn = self.cursor.connection
+          print(cn)
+          print(cn.get_host_info())
+          print(cn.get_proto_info())
+          print(cn.get_server_info())
+
+    ################################
+    def __call__(self,*args,**kwargs):
+        """Append changes to eXcel worksheet"""
+        if self.changeds:                  ### Do nothing for no changes
+
+            ### INSERT new data into MariaDB/MySQL TABLE 'log'
+            self.cursor.executemany("""
+INSERT INTO log (tag_name,tag_value,timestamp)
+VALUES (%s,%s,%s)
+""",self.changeds)
+
+
+########################################################################
+########################################################################
+
 class PYLOGIX_LOGGER_GOOGLE_SHEET(PYLOGIX_LOGGER):
     """Log 'TagName,Value,Timestamp' to Google Sheet"""
 
