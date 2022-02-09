@@ -1,3 +1,5 @@
+# Use pylogix module to log PLC data to spreadsheet (CSV , or eXcel, or Google) or MariaDB/MySQL database
+
 ### Usage
 
     % python pylogix_logger_drbitboy.py        \
