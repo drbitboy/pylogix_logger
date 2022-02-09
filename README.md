@@ -1,4 +1,4 @@
-# Use pylogix module to log PLC data to spreadsheet (CSV , or eXcel, or Google) or MariaDB/MySQL database
+# Use pylogix module to log PLC data to ASCII (text or CSV), or to spreadsheet (eXcel, or Google) orto  MariaDB/MySQL database
 
 ### Usage
 
