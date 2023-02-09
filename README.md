@@ -62,6 +62,6 @@ See files under sub-directory pymariadb/.
 ### See also
 
 * https://docs.google.com/spreadsheets/d/1zHFhjtSec0XDO1z-lIhtwBU8O7ZiE9MJIhiBUa-YkAA/
-  * That string, 1zHFhjtSec0XDO1z-lIhtwBU8O7ZiE9MJIhiBUa-YkAA, is the ... in --gapi-ssheet-id-... above
+  * That string, 1zHFhjtSec0XDO1z-lIhtwBU8O7ZiE9MJIhiBUa-YkAA, is implied in the ... in --gapi-ssheet-id=... above
   * Here is what that sheet looks like
   * ![](https://github.com/drbitboy/pylogix_logger/raw/master/images/PLCLOGPOC_sheet.png)
