@@ -63,5 +63,6 @@ See files under sub-directory pymariadb/.
 
 * https://docs.google.com/spreadsheets/d/1zHFhjtSec0XDO1z-lIhtwBU8O7ZiE9MJIhiBUa-YkAA/
   * That string, 1zHFhjtSec0XDO1z-lIhtwBU8O7ZiE9MJIhiBUa-YkAA, is implied in the ... in --gapi-ssheet-id=... above
-  * Here is what that sheet looks like
+  * The image below is an example of what that sheet looks like
+  * Note that the this Google sheet's data and the plot can be made to update in near-realtime 
   * ![](https://github.com/drbitboy/pylogix_logger/raw/master/images/PLCLOGPOC_sheet.png)
